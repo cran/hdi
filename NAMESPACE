@@ -1,0 +1,18 @@
+import(glmnet)
+import(linprog)
+import(plus)
+
+export(hdi, hdi)
+export(hdi, stability)
+export(hdi, multi.split)
+export(hdi, lasso.cv)
+export(hdi, lm.pval)
+export(hdi, glm.pval)
+export(hdi, lasso.firstq)
+export(hdi, fdr.adjust)
+
+export(hdi, clusterLowerBound)
+export(hdi, groupLowerBound)
+
+S3method(print, hdi)
+S3method(plot, clusterLowerBound)
