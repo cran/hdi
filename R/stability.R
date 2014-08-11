@@ -1,6 +1,7 @@
 stability <- function(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
                       model.selector = lasso.firstq,
-                      args.model.selector = NULL, trace = FALSE)
+                      args.model.selector = NULL,
+                      parallel = FALSE, ncores = 4, trace = FALSE)
 {
   ## Purpose:
   ## ----------------------------------------------------------------------
@@ -38,13 +39,9 @@ stability <- function(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
   sel.mat <- matrix(FALSE, nrow = B, ncol = p) 
 
   sel.n <- floor(fraction * n)
-  
-  ## Subsampling
-  for(b in 1:B){
-    if(trace)
-      cat("...Subsample", b, "\n")
-    sel <- sample(1:n, sel.n, replace = FALSE)
 
+  oneSample <- function(...){
+    sel <- sample(1:n, sel.n, replace = FALSE)
     ## Current sub-sampled data
     x.sel <- x[sel,]
     y.sel <- y[sel]
@@ -52,9 +49,36 @@ stability <- function(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
     ## Get selected model
     sel.model <- do.call(model.selector, c(list(x = x.sel, y = y.sel, q = q),
                                            args.model.selector))
-    sel.mat[b, sel.model] <- TRUE
+    out <- logical(ncol(x))
+    out[sel.model] <- TRUE
+    out
   }
-  
+
+  if(parallel){
+    if(trace)
+      cat("...starting parallelization of bootstrap samples\n")
+    sel.mat <- matrix(unlist(mclapply(1:B, oneSample, mc.cores = ncores)),
+                      nrow = B, byrow = TRUE)
+  }
+  else{
+    ## Subsampling
+    for(b in 1:B){
+      if(trace)
+        cat("...Subsample", b, "\n")
+      sel.mat[b, ] <- oneSample()
+      ##-     sel <- sample(1:n, sel.n, replace = FALSE)
+      ##- 
+      ##-     ## Current sub-sampled data
+      ##-     x.sel <- x[sel,]
+      ##-     y.sel <- y[sel]
+      ##- 
+      ##-     ## Get selected model
+      ##-     sel.model <- do.call(model.selector, c(list(x = x.sel, y = y.sel, q = q),
+      ##-                                            args.model.selector))
+      ##-     sel.mat[b, sel.model] <- TRUE
+    }
+  }
+
   ## Get selection frequencies
   freq <- colMeans(sel.mat)
   names(freq) <- col.nam
@@ -71,7 +95,7 @@ stability <- function(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
   out <- sel.current
   ##}
 
-  out <- list(select     = sel.current,
+  out <- list(selected   = sel.current,
               EV         = EV,
               threshold  = threshold,
               freq       = freq,

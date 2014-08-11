@@ -83,7 +83,7 @@ fit.multi <- hdi(x, y, method = "multi.split",
                  model.selector =lasso.firstq,
                  args.model.selector = list(q = 10))
 fit.multi
-fit.multi$pval[1:10] ## the first 10 p-values
+fit.multi$pval.corr[1:10] ## the first 10 p-values
 
 ## Stability selection
 fit.stab <- hdi(x, y, method = "stability", EV = 2)

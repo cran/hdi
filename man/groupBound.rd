@@ -1,5 +1,5 @@
-\name{groupLowerBound}
-\alias{groupLowerBound}
+\name{groupBound}
+\alias{groupBound}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Lower bound on the l1-norm of groups of regression variables}
 
@@ -13,9 +13,10 @@
  approximation to the noiseless data.}
 
 \usage{
-groupLowerBound(x, y, group, alpha = 0.05, nsplit = 11,
+groupBound(x, y, group, alpha = 0.05, nsplit = 11,
                 s = min(10, ncol(x) - 1), setseed = TRUE,
-                silent = FALSE, lpSolve = TRUE)}
+                silent = FALSE, lpSolve = TRUE,
+                parallel = FALSE, ncores = 4)}
 \arguments{
   \item{x}{The design matrix of the regression with p columns for p predictor
     variables and n rows that correspond to n observations.}
@@ -37,7 +38,9 @@ groupLowerBound(x, y, group, alpha = 0.05, nsplit = 11,
   \item{silent}{Output is supressed if this option is set to true.}
   \item{lpSolve}{Only set to false if lpSolve is not working on the
     current machine (setting it to false will results in much slower
-    computations; only use on small problems).}}
+    computations; only use on small problems).}
+  \item{parallel}{Should parallelization be used? (logical)}
+  \item{ncores}{Number of cores used for parallelization.}}
 
 \details{The data are split since the noise level is unknown. On the
   first part of the random split, a cross-validated lasso solution is
@@ -58,7 +61,7 @@ groupLowerBound(x, y, group, alpha = 0.05, nsplit = 11,
 %\note{
 %}
 
-\seealso{Use \code{clusterLowerBound} to test all groups in a hierarchical
+\seealso{Use \code{clusterGroupBound} to test all groups in a hierarchical
  clustering tree.}
 
 \examples{
@@ -90,13 +93,13 @@ y  <- as.numeric(x \%*\% beta + rnorm(n))
 
 ## Lower bound for the l1-norm of all variables 1-10 of the sparsest
 ## optimal vector  
-lowerBoundAll <- groupLowerBound(x, y, 1:p)
+lowerBoundAll <- groupBound(x, y, 1:p)
 print(lowerBoundAll)
 cat("\nlower bound for all variables 1-10: ", lowerBoundAll, "\n")
 
 ## Compute lower bounds:
 ## Lower bounds for variable 1 in itself, then groups 1-5
-lowerBound <- groupLowerBound(x, y, list(1, 1:5))
+lowerBound <- groupBound(x, y, list(1, 1:5))
 cat("lower bound for the groups {1}, {1,...,5}: ", lowerBound, "\n")
 }
 \keyword{confidence intervals}

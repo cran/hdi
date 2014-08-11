@@ -1,13 +1,13 @@
-\name{plot.clusterLowerBound}
-\alias{plot.clusterLowerBound}
+\name{plot.clusterGroupBound}
+\alias{plot.clusterGroupBound}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Plot output of hierarchical testing of groups of variables}
 \description{The functions plots the outcome of applying a lower bound on the
  l1-norm on groups of variables in a hierarchical clustering tree.} 
-\usage{\method{plot}{clusterLowerBound}(x, cexfactor = 1, yaxis = "members",
+\usage{\method{plot}{clusterGroupBound}(x, cexfactor = 1, yaxis = "members",
      col = NULL, ...)}
 \arguments{
-  \item{x}{The output of function \code{clusterLowerBound}}
+  \item{x}{The output of function \code{clusterGroupBound}}
   \item{cexfactor}{Multiplies the size of the node symbols.}
   \item{yaxis}{For the default value ("members"), the hierarchical tree
     is shown as function of cluster size on the y-axis, whereas the node
@@ -31,9 +31,9 @@
 %\note{}
 
 \seealso{
-  Use \code{clusterLowerBound} to test all groups in a hierarchical
+  Use \code{clusterGroupBound} to test all groups in a hierarchical
   clustering tree. 
-  Use \code{lowerGroupBound} to compute the lower bound for selected
+  Use \code{groupBound} to compute the lower bound for selected
   groups of variables. 
 }
 \examples{
@@ -62,7 +62,7 @@ beta[1] <- 5
 y  <- as.numeric(x \%*\% beta + rnorm(n))
             
 ## Compute the lower bound for all groups in a hierarchical clustering tree
-out <- clusterLowerBound(x, y, nsplit = 5)
+out <- clusterGroupBound(x, y, nsplit = 5)
 
 ## Plot the tree with y-axis proportional to the (log) of the number of
 ## group members and node sizes proportional to the lower l1-norm bound.
