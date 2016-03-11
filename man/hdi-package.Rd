@@ -3,30 +3,43 @@
 \docType{package}
 \title{hdi}
 \description{
-Perform inference in high-dimensional (generalized) linear models using various approaches.
+%% MM:  \package*{} macros are fine  *BUT* require a 'R CMD build' *before* R CMD check
+\packageDescription{hdi}
+%% Perform inference in high-dimensional (generalized) linear models using
+%% various approaches.
 }
 \details{
-\tabular{ll}{
-Package: \tab hdi\cr
-Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2013-04-02\cr
-License: \tab GPL \cr
-}
-This is a very early test release!
+The DESCRIPTION file:
+\packageDESCRIPTION{hdi}
+\packageIndices{hdi}
 }
 \author{
-Lukas Meier
-
-Maintainer: Lukas Meier <meier@stat.math.ethz.ch>
+  Lukas Meier,
+  Ruben Dezeure,
+  Nicolai Meinshausen,
+  Martin \enc{Mächler}{Maechler},
+  Peter \enc{Bühlmann}{Buhlmann},
+  Maintainer: Lukas Meier <meier@stat.math.ethz.ch>
 }
 \references{
-  Meinshausen, N., Meier, L. and B\"uhlmann, P. (2009),
-  \emph{P-values for high-dimensional regression}, Journal of the
-  American Statistical Association 104, 1671-1681.
+  Dezeure, R., \enc{Bühlmann}{Buhlmann}, P., Meier, L. and Meinshausen, N. (2015)
+  High-dimensional inference: confidence intervals, p-values and
+  R-software hdi.
+  \emph{Statistical Science} \bold{30}, 533--558. 
 
-  Meinshausen, N. and B\"uhlmann, P. (2010), \emph{Stability selection
-  (with discussion)}, Journal of the Royal Statistical Society: Series B,
-  72, 417-473.}
+  Meinshausen, N., Meier, L. and \enc{Bühlmann}{Buhlmann}, P. (2009)
+  P-values for high-dimensional regression.
+  \emph{Journal of the American Statistical Association} \bold{104}, 1671--1681.
+
+  Meinshausen, N. (2015)
+  Group-bound: confidence intervals for groups of variables in sparse
+  high-dimensional regression without assumptions on the design.
+  \emph{Journal of the Royal Statistical Society: Series B},
+  \bold{77}(5), 923--945. 
+
+  Meinshausen, N. and \enc{Bühlmann}{Buhlmann}, P. (2010)
+  Stability selection (with discussion).
+  \emph{Journal of the Royal Statistical Society: Series B} \bold{72}, 417--473.
+}
 \keyword{ package }
 

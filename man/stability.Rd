@@ -6,7 +6,8 @@
 \usage{
 stability(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
           model.selector = lasso.firstq, args.model.selector = NULL,
-          parallel = FALSE, ncores = 4, trace = FALSE)
+          parallel = FALSE, ncores = getOption("mc.cores", 2L),
+          verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,28 +28,32 @@ stability(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
     function \code{model.selector}.}
   \item{parallel}{Should parallelization be used? (logical)}
   \item{ncores}{Number of cores used for parallelization.}
-  \item{trace}{Should information be printed out while computing (logical).}
+  \item{verbose}{Should information be printed out while computing (logical).}
 }
-\details{...}
+%\details{...}
 
 \value{
   \item{selected}{Vector of selected predictors.}
   \item{freq}{Vector of selection frequencies.}
   \item{q}{Size of fitted models in order to control error rate at
-  desired level.}
+    desired level.}
 }
 
-\references{B\"hlmann, P., Kalisch, M. and Meier,
-  L. (2013). \emph{High-dimensional statistics with a view towards
-  applications in biology}. To appear in Annual Review of Statistics and
-  its Applications. Preprint}
+\references{
+  Meinshausen, N. and \enc{Bühlmann}{Buhlmann}, P. (2010)
+  Stability selection (with discussion).
+  \emph{Journal of the Royal Statistical Society: Series B} \bold{72}, 417--473.
 
+  \enc{Bühlmann}{Buhlmann}, P., Kalisch, M. and Meier,
+  L. (2014) \emph{High-dimensional statistics with a view towards
+  applications in biology}. Annual Review of Statistics and
+  its Applications \bold{1}, 255--278}
 
 \author{Lukas Meier}
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
-\seealso{...}
+%\seealso{...}
 
 \examples{
 x <- matrix(rnorm(100*1000), nrow = 100, ncol = 1000)

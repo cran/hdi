@@ -1,0 +1,17 @@
+citHeader("To cite hdi in publications use:")
+
+citEntry(entry = "Article",
+  title        = "High-Dimensional Inference: Confidence Intervals, p-values and {R}-Software {hdi}",
+  author       = personList(as.person("Ruben Dezeure"),
+                            as.person("Peter B\\\"uhlmann"),
+                            as.person("Lukas Meier"),
+                            as.person("Nicolai Meinshausen")),
+  journal      = "Statistical Science",
+  year         = "2015",
+  volume       = "30",
+  number       = "4",
+  pages        = "533--558",
+
+  textVersion  =
+  paste("Ruben Dezeure, Peter Buehlmann, Lukas Meier and Nicolai Meinshausen (2015).", "High-Dimensional Inference: Confidence Intervals, p-values and R-Software hdi.", "Statistical Science 30 (4), 533-558.")
+)

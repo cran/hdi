@@ -5,14 +5,14 @@
 \description{Calculates (classical) p-values for an ordinary generalized
   linear model in the n > p situation.}
 \usage{
-glm.pval(x, y, family = "binomial", trace = FALSE, ...)
+glm.pval(x, y, family = "binomial", verbose = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{Design matrix (without intercept).}
   \item{y}{Response vector.}
   \item{family}{As in \code{\link{glm}}.}
-  \item{trace}{Logical. Should information be printed out if algorithm
+  \item{verbose}{Logical. Should information be printed out if algorithm
     did not converge?}
   \item{...}{Additional arguments to be passed to \code{\link{glm}}.}
 }

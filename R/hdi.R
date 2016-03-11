@@ -6,7 +6,7 @@ hdi <- function(x, y, method = "multi.split", B = NULL,
                 classical.fit = NULL,                ## multi-split args
                 args.model.selector = NULL,          ## list
                 args.classical.fit = NULL,           ## list
-                trace = FALSE, ...)
+                verbose = FALSE, ...)
 {
   ## Purpose:
   ## ----------------------------------------------------------------------
@@ -42,7 +42,7 @@ hdi <- function(x, y, method = "multi.split", B = NULL,
                        gamma = gamma,
                        args.model.selector = args.model.selector,
                        args.classical.fit = args.classical.fit,
-                       trace = trace,...)
+                       verbose = verbose,...)
   }
   
   #########################
@@ -70,7 +70,7 @@ hdi <- function(x, y, method = "multi.split", B = NULL,
                      threshold = threshold, model.selector = model.selector,
                      EV = EV,
                      args.model.selector = args.model.selector,
-                     trace = trace,...)
+                     verbose = verbose,...)
   }
   else{
     stop("Method not (yet) defined")
@@ -79,11 +79,10 @@ hdi <- function(x, y, method = "multi.split", B = NULL,
   ## ...
   
   ## The following overwrites 
-  out$call = match.call()
+  out$call <- match.call()
   
   class(out) <- "hdi"
-  
-  return(out)
+  out
 }
 
 

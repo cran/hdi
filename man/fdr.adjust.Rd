@@ -15,7 +15,7 @@ fdr.adjust(p)
   multiplicity. P-values with a value of 1 are currently ignored.}
 \value{Vector of p-values.}
 \references{
-  Meinshausen, N., Meier, L. and B\"uhlmann, P. (2009),
+  Meinshausen, N., Meier, L. and \enc{Bühlmann}{Buhlmann}, P. (2009),
   \emph{P-values for high-dimensional regression}, Journal of the
   American Statistical Association 104, 1671-1681.
 }

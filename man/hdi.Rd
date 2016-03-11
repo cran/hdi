@@ -9,14 +9,14 @@ hdi(x, y, method = "multi.split", B = NULL, fraction = 0.5,
     gamma = seq(0.05, 0.99, by = 0.01),
     classical.fit = NULL,
     args.model.selector = NULL, args.classical.fit = NULL,
-    trace = FALSE, ...)
+    verbose = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{Design matrix (without intercept).}
   \item{y}{Response vector.}
   \item{method}{Multi-splitting ("multi.split") or stability-selection
-    ("stability").} 
+    ("stability").}
   \item{B}{Number of sample-splits (for "multi.split") or sub-sample
     iterations (for "stability"). Default is 50 ("multi.split")or 100
     ("stability"). Ignored otherwise.}
@@ -36,16 +36,16 @@ hdi(x, y, method = "multi.split", B = NULL, fraction = 0.5,
   \item{gamma}{(only for "multi.split"). Vector of gamma-values.}
   \item{classical.fit}{(only
     for "multi.split"). Function to calculate (classical)
-    p-values. Default is \code{\link{lm.pval}}. Function must 
+    p-values. Default is \code{\link{lm.pval}}. Function must
     have at least two arguments: x (the design matrix) and y (the
     response vector). Return value is the vector of p-values. See
     \code{\link{lm.pval}} for an example. Additional arguments can be
     passed through \code{args.classical.fit}.}
   \item{args.model.selector}{Named list of further arguments for
-    function \code{model.selector}.} 
+    function \code{model.selector}.}
   \item{args.classical.fit}{Named list of further arguments for function
     \code{classical.fit}.}
-  \item{trace}{Should information be printed out while computing
+  \item{verbose}{Should information be printed out while computing
     (logical).}
   \item{...}{Other arguments to be passed to the underlying functions.}
 }
@@ -62,17 +62,19 @@ hdi(x, y, method = "multi.split", B = NULL, fraction = 0.5,
 }
 
 \references{
-  Meinshausen, N., Meier, L. and B\"uhlmann, P. (2009),
-  \emph{P-values for high-dimensional regression}, Journal of the
-  American Statistical Association 104, 1671-1681.
+  Meinshausen, N., Meier, L. and \enc{Bühlmann}{Buhlmann}, P. (2009)
+  P-values for high-dimensional regression.
+  \emph{Journal of the American Statistical Association} \bold{104}, 1671--1681.
 
-  Meinshausen, N. and B\"uhlmann, P. (2010), \emph{Stability selection
-  (with discussion)}, Journal of the Royal Statistical Society: Series B,
-  72, 417-473.}
+  Meinshausen, N. and \enc{Bühlmann}{Buhlmann}, P. (2010)
+  Stability selection (with discussion).
+  \emph{Journal of the Royal Statistical Society: Series B} \bold{72}, 417--473.
+}
 \author{Lukas Meier}
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-\seealso{\code{\link{stability}}, \code{\link{multi.split}}}
+\seealso{
+  \code{\link{stability}}, \code{\link{multi.split}}
+}
 
 \examples{
 x <- matrix(rnorm(100*1000), nrow = 100, ncol = 1000)

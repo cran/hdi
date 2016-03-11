@@ -11,7 +11,8 @@ score.nodewiselasso <- function(x,
                                 parallel = FALSE,
                                 ncores = 8,
                                 oldschool = FALSE,
-                                lambdatuningfactor = 1)
+                                lambdatuningfactor = 1,
+                                cv.verbose = FALSE)
 {
   ## Purpose:
   ## This function calculates the score vectors Z OR the matrix of nodewise
@@ -22,47 +23,43 @@ score.nodewiselasso <- function(x,
   ## Author: Ruben Dezeure, Date: 27 Nov 2012 (initial version),
 
   ## First, a sequence of lambda values over all nodewise regressions is created
-  
-  if(lambdaseq == "quantile"){ ## this is preferred
-    lambdas <- nodewise.getlambdasequence(x)
-  }else{
-    if(lambdaseq == "linear"){
-      lambdas <- nodewise.getlambdasequence.old(x,verbose)
-    }else{
-      stop("invalid lambdaseq given")
-    }
-  }
+
+  lambdas <-
+    switch(lambdaseq,
+           "quantile" = nodewise.getlambdasequence(x), ## this is preferred
+           "linear"   = nodewise.getlambdasequence.old(x,verbose),
+           ## otherwise
+           stop("invalid 'lambdaseq': ", lambdaseq))
   
   if(verbose){
-    print("Using the following lambda values")
-    print(lambdas)
+    cat("Using the following lambda values:", lambdas, "\n")
   }
 
   ## 10-fold cv is done over all nodewise regressions to calculate the error
   ## for the different lambda
   cvlambdas <- cv.nodewise.bestlambda(lambdas = lambdas, x = x,
                                       parallel = parallel, ncores = ncores,
-                                      oldschool = oldschool)
+                                      oldschool = oldschool,
+                                      verbose = cv.verbose)
   if(verbose){
-    print(paste("lambda.min is", cvlambdas$lambda.min))
-    print(paste("lambda.1se is", cvlambdas$lambda.1se))
+    cat(paste("lambda.min is", cvlambdas$lambda.min), "\n")
+    cat(paste("lambda.1se is", cvlambdas$lambda.1se), "\n")
   }
   
   if(lambdatuningfactor == "lambda.1se"){
     if(verbose)
-      print("lambda.1se used for nodewise tuning")
+      cat("lambda.1se used for nodewise tuning\n")
     ## We use lambda.1se for bestlambda now!!!
     bestlambda <- cvlambdas$lambda.1se
     }else{
       if(verbose)
-        print(paste("lambdatuningfactor used is ", lambdatuningfactor, sep = ""))
+        cat("lambdatuningfactor used is", lambdatuningfactor, "\n")
       
       bestlambda <- cvlambdas$lambda.min * lambdatuningfactor
     }
   
   if(verbose){
-    print("Picked the best lambda")
-    print(bestlambda)
+    cat("Picked the best lambda:", bestlambda, "\n")
     ##print("with the error ")
     ##print(min(err))
   }
@@ -96,14 +93,14 @@ score.getThetaforlambda <- function(x, lambda, parallel = FALSE, ncores = 8,
   ## Arguments:
   ## ----------------------------------------------------------------------
   ## Author: Ruben Dezeure, Date: 27 Nov 2012 (initial version),
-  print("Calculating Thetahat by doing nodewise regressions and dropping the unpenalized intercept")
+  message("Calculating Thetahat by doing nodewise regressions and dropping the unpenalized intercept")
   n <- nrow(x)
   p <- ncol(x)
   C <- diag(rep(1,p))
   T2 <- numeric(p)
   
   if(oldschool){
-    print("doing getThetaforlambda oldschool")
+    message("doing getThetaforlambda oldschool")
     for(i in 1:p){
       glmnetfit <- glmnet(x[,-i], x[,i])
       coeffs <- as.vector(predict(glmnetfit,x[,-i], type = "coefficients",
@@ -127,15 +124,14 @@ score.getThetaforlambda <- function(x, lambda, parallel = FALSE, ncores = 8,
   }
   thetahat <- C %*% solve(diag(T2))
   if(verbose){
-    print("1/tau_j^2")
-    print(solve(diag(T2)))
+    cat("1/tau_j^2:", solve(diag(T2)), "\n")
   }
   ##this is thetahat ^ T!!
   thetahat <- t(thetahat)
   
   if(all(thetahat[lower.tri(thetahat)] == 0,
          thetahat[upper.tri(thetahat)] == 0) && verbose)
-    print("Thetahat is a diagonal matrix!!!! ")
+    cat("Thetahat is a diagonal matrix!\n")
   
   return(thetahat)
 }
@@ -156,7 +152,7 @@ score.getZforlambda <- function(x, lambda, parallel = FALSE, ncores = 8,
   Z <- matrix(numeric(n*p),n)
   
   if(oldschool){
-    print("doing getZforlambda oldschool")
+    message("doing getZforlambda oldschool")
     for(i in 1:p){
       glmnetfit <- glmnet(x[,-i],x[,i])
       prediction <- predict(glmnetfit,x[,-i],s=lambda)
@@ -173,7 +169,6 @@ score.getZforlambda <- function(x, lambda, parallel = FALSE, ncores = 8,
                   lambda = lambda)
     }
   }
-  
   ## rescale Z such that t(Zj) Xj/n = 1 \-/ j
   Z <- score.rescale(Z,x)
   return(Z)
@@ -203,7 +198,7 @@ score.rescale <- function(Z, x)
   ## Author: Ruben Dezeure, Date: 27 Nov 2012 (initial version),
   scaleZ <- diag(crossprod(Z,x)) / nrow(x)
   Z      <- scale(Z, center = FALSE, scale = scaleZ)
-  return(Z)
+  return(list(Z=Z,scaleZ=scaleZ))
 }
 
 nodewise.getlambdasequence <- function(x)
@@ -231,8 +226,8 @@ nodewise.getlambdasequence <- function(x)
   return(lambdas)
 }
 
-cv.nodewise.err.unitfunction <- function(c, K, dataselects, x, lambdas)
-{
+cv.nodewise.err.unitfunction <- function(c, K, dataselects, x, lambdas,
+                                         verbose, p) {
   ## Purpose:
   ## this method returns the K-fold cv error made by the nodewise regression
   ## of the single column c of x vs the other columns for all values of the
@@ -242,13 +237,23 @@ cv.nodewise.err.unitfunction <- function(c, K, dataselects, x, lambdas)
   ## ----------------------------------------------------------------------
   ## Author: Ruben Dezeure, Date: 27 Nov 2012 (initial version),
   
-  totalerr <- cv.nodewise.totalerr(c = c,
-                                   K = K,
-                                   dataselects = dataselects,
-                                   x = x,
-                                   lambdas = lambdas)
-  ##return(apply(totalerr, 1, mean))
-  return(totalerr)
+  if(verbose){ ##print some information out about the progress
+      ##report every 25%
+    interesting.points <- round(c(1/4,2/4,3/4,4/4)*p)
+    names(interesting.points) <- c("25%","50%","75%","100%")
+    if(c %in% interesting.points){
+      cat("The expensive computation is now",
+          names(interesting.points)[c == interesting.points],
+          "done\n")
+    }
+  }
+  
+  ## return  'totalerr' 
+  cv.nodewise.totalerr(c = c,
+                       K = K,
+                       dataselects = dataselects,
+                       x = x,
+                       lambdas = lambdas)
 }
 
 ## gets the standard error for one particular lambda
@@ -279,13 +284,11 @@ cv.nodewise.stderr <- function(K, x, dataselects, lambda, parallel, ncores)
                        x = list(x = x),
                        lambdas = lambda)
   }
-  ##get the mean over the variables
-  totalerr.varmean <- apply(totalerr, 1, mean)
+  ## get the mean over the variables
+  totalerr.varmean <- rowMeans(totalerr)
   
-  ##get the stderror over the K
-  stderr.forlambda <- sd(totalerr.varmean) / sqrt(K)
-  
-  return(stderr.forlambda)
+  ## get the stderror over the K;  return stderr.forlambda
+  sd(totalerr.varmean) / sqrt(K)
 }
 
 cv.nodewise.totalerr <- function(c, K, dataselects, x, lambdas)
@@ -312,12 +315,13 @@ cv.nodewise.totalerr <- function(c, K, dataselects, x, lambdas)
     totalerr[, i] <- apply((x[whichj, c] - predictions)^2, 2, mean)
   }
 
-  return(totalerr)
+  totalerr
 }
 
 
 cv.nodewise.bestlambda <- function(lambdas, x, K = 10, parallel = FALSE,
-                                   ncores = 8, oldschool = FALSE)
+                                   ncores = 8, oldschool = FALSE,
+                                   verbose = FALSE)
 {
   ## Purpose:
   ## this function finds the optimal tuning parameter value for minimizing
@@ -339,7 +343,7 @@ cv.nodewise.bestlambda <- function(lambdas, x, K = 10, parallel = FALSE,
   dataselects <- sample(rep(1:K, length = n))
   
   if(oldschool){
-    print("doing cv.nodewise.error oldschool")
+    message("doing cv.nodewise.error oldschool")
     totalerr <- numeric(l)
     for(c in 1:p){ ## loop over the nodewise regressions
       for(i in 1:K){ ## loop over the test sets
@@ -367,7 +371,9 @@ cv.nodewise.bestlambda <- function(lambdas, x, K = 10, parallel = FALSE,
                            x = list(x = x),
                            lambdas = list(lambdas = lambdas),
                            mc.cores = ncores,
-                           SIMPLIFY = FALSE)
+                           SIMPLIFY = FALSE,
+                           verbose = verbose,
+                           p=p)
     }else{
       totalerr <- mapply(cv.nodewise.err.unitfunction,
                          c = 1:p,
@@ -375,7 +381,9 @@ cv.nodewise.bestlambda <- function(lambdas, x, K = 10, parallel = FALSE,
                          dataselects = list(dataselects = dataselects),
                          x = list(x = x),
                          lambdas = list(lambdas = lambdas),
-                         SIMPLIFY = FALSE)
+                         SIMPLIFY = FALSE,
+                         verbose = verbose,
+                         p = p)
     }
     ## Convert into suitable array (lambda, cv-fold, predictor)
     err.array  <- array(unlist(totalerr), dim = c(length(lambdas), K, p))
@@ -397,10 +405,8 @@ cv.nodewise.bestlambda <- function(lambdas, x, K = 10, parallel = FALSE,
 ##-                                           lambda = lambda.min,
 ##-                                           parallel = parallel,
 ##-                                           ncores = ncores)
-  lambda.1se <- max(lambdas[err.mean < (min(err.mean) + stderr.lambda.min)])
-  
-  return(list(lambda.min=lambda.min,
-              lambda.1se=lambda.1se))
+  list(lambda.min = lambda.min,
+       lambda.1se = max(lambdas[err.mean < (min(err.mean) + stderr.lambda.min)]))
 }
 
 ##DEPRECATED, not really the best choice
@@ -426,21 +432,20 @@ nodewise.getlambdasequence.old <- function(x,verbose=FALSE)
     
       ##DEBUG
     if(verbose || is.nan(max(lambdas))){
-      print(paste("c ",c,sep=""))
-      print("lambdas")
-      print(lambdas)
-      print("max(lambdas) max(lambdas,na.rm=TRUE) maxlambda")
-      print(paste(max(lambdas),max(lambdas,na.rm=TRUE),maxlambda,sep=""))
+      cat(paste("c:", c, "\n"))
+      cat("lambdas:", lambdas, "\n")
+      cat("max(lambdas) max(lambdas,na.rm=TRUE) maxlambda: ",
+          max(lambdas), max(lambdas,na.rm=TRUE), maxlambda, "\n")
     }
     if(max(lambdas,na.rm=TRUE) > maxlambda){
       maxlambda <- max(lambdas,na.rm=TRUE)
     }
     if(min(lambdas,na.rm=TRUE) < minlambda){
-      minlambda <- min(lambdas,na.rm=TRUE)
+      minlambda <- min(lambdas, na.rm = TRUE)
     }
   }
   
-  lambdas <- seq(minlambda,maxlambda,by=(maxlambda-minlambda)/nlambda)
-  lambdas <- sort(lambdas,decreasing=TRUE)
-  return(lambdas)
+  lambdas <- seq(minlambda, maxlambda, by = (maxlambda-minlambda)/nlambda)
+  ## return
+  sort(lambdas, decreasing=TRUE)
 }

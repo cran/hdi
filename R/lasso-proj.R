@@ -2,14 +2,19 @@ lasso.proj <- function(x, y, family = "gaussian",
                        standardize = TRUE,
                        multiplecorr.method = "holm",
                        N = 10000,
-                       parallel = FALSE, ncores = 4,
+                       parallel = FALSE, ncores = getOption("mc.cores", 2L),
+                       betainit = "cv lasso",
                        sigma = NULL, ## sigma estimate provided by the user
-                       Z = NULL)     ## Z or Thetahat provided by the user
+                       Z = NULL,     ## Z or Thetahat provided by the user
+                       verbose = FALSE,
+                       return.Z = FALSE,
+                       suppress.grouptesting = FALSE,
+                       robust = FALSE)
 {
   ## Purpose:
   ## An implementation of the LDPE method http://arxiv.org/abs/1110.2563
   ## which is identical to
-  ## http://arxiv.org/abs/1303.0518 
+  ## http://arxiv.org/abs/1303.0518
   ## ----------------------------------------------------------------------
   ## Arguments:
   ## ----------------------------------------------------------------------
@@ -27,7 +32,6 @@ lasso.proj <- function(x, y, family = "gaussian",
   ####################
   ## Get data ready ##
   ####################
-  
   n <- nrow(x)
   p <- ncol(x)
 
@@ -48,7 +52,7 @@ lasso.proj <- function(x, y, family = "gaussian",
                                     family = family)
                     })
 
-  ## center the columns the response to get rid of the intercept
+  ## center the columns and the response to get rid of the intercept
   x <- scale(dataset$x, center = TRUE, scale = FALSE)
   y <- scale(dataset$y, scale = FALSE)
   y <- as.numeric(y)
@@ -56,7 +60,7 @@ lasso.proj <- function(x, y, family = "gaussian",
   ## Warning: should we allow user to still specify their
   ## own Z here?
   ## Z <- NULL##will have to recalculate Z
-  
+
   ## force sigmahat to 1 when doing glm!
   if(family == "binomial")
     sigma <- 1
@@ -64,56 +68,61 @@ lasso.proj <- function(x, y, family = "gaussian",
   ######################################
   ## Calculate Z using nodewise lasso ##
   ######################################
-  
+
   if(is.null(Z)){
     nodewiselasso.out <- score.nodewiselasso(x = x,
                                              wantTheta = FALSE,
                                              parallel = parallel,
-                                             ncores = ncores)
-    Z <- nodewiselasso.out$out
+                                             ncores = ncores,
+                                             cv.verbose = verbose)
+    Z <- nodewiselasso.out$out$Z
+    scaleZ <- nodewiselasso.out$out$scaleZ
   }else{
     ## Check if normalization is fulfilled
-    if(!all.equal(rep(1, p), colSums(Z * x) / n, tolerance = 10^-8)){
-      print("Z not properly normalized...")
-      print("...we assume all(colSums(Z * x) / n == rep(1, p))")
-      print("...rescaling Z ourselves.")
-      Z <- score.rescale(Z = Z, x = x)
+    if(!isTRUE(all.equal(rep(1, p), colSums(Z * x) / n, tolerance = 10^-8))){
+      ##no need to print stuff to the user, this is only an internal detail
+      rescale.out <- score.rescale(Z = Z, x = x)
+      Z <- rescale.out$Z
+      scaleZ <- rescale.out$scaleZ
     }
   }
-  
+
 
   ###################################
   ## Projection estimator and bias ##
   ###################################
-  
-  bproj <- t(Z) %*% y / n
-  
-  ## Bias estimate based on lasso estimate
-  scaledlassofit <- scalreg(X = x, y = y, lam0 = "univ")
-  betalasso      <- scaledlassofit$coefficients
+  bproj <- crossprod(Z, y) / n
 
-  ## Get estimated standard deviation
-  if(is.null(sigma))
-    sigmahat <- scaledlassofit$hsigma
-  else
-    sigmahat <- sigma
+  ## Bias estimate based on lasso estimate
+  initial.estimate <- initial.estimator(betainit = betainit, sigma = sigma,
+                                        x = x, y = y)
+  betalasso <- initial.estimate$beta.lasso
+  sigmahat <- initial.estimate$sigmahat
 
   ## Subtract bias
   bias <- numeric(p)
   for(j in 1:p){ ## replace loop?
     bias[j] <- (t(Z[,j]) %*% x[,-j]) %*% betalasso[-j] / n
   }
-  
+
   bproj <- bproj - bias
 
   #########################
   ## p-Value calculation ##
   #########################
 
-  ## Determine normalization factor
-  scaleb        <- n / (sigmahat * sqrt(colSums(Z^2))) ##sqrt(diag(crossprod(Z)))
+  scaleb <-
+    if(robust)
+      1/sandwich.var.est.stderr(x=x,y=y,betainit=betalasso,Z=Z)
+    else
+      ## Determine normalization factor
+      n / (sigmahat * sqrt(colSums(Z^2))) ##sqrt(diag(crossprod(Z)))
+
+  ## Also return the confidence intervals
+  se <- 1 / scaleb
+
   bprojrescaled <- bproj * scaleb
-  
+
   ## Calculate p-value
   pval <- 2 * pnorm(abs(bprojrescaled), lower.tail = FALSE)
 
@@ -122,49 +131,47 @@ lasso.proj <- function(x, y, family = "gaussian",
   #################################
   ## Multiple testing correction ##
   #################################
-  
-  if(multiplecorr.method == "WY"){
-    ## Westfall-Young like procedure as in ridge projection method,
-    ## P.Buhlmann & L.Meier
-    ## method related to the Westfall - Young procedure
-    ## constants left out since we'll rescale anyway
-    ## otherwise cov2 <- crossprod(Z)/n
-    pcorr <- p.adjust.wy(cov = cov2, pval = pval, N = N)
-  }else{
-    if(multiplecorr.method %in% p.adjust.methods){
-      pcorr <- p.adjust(pval,method = multiplecorr.method)
-    }else{
-      stop("Unknown multiple correction method specified")
-    }
-  }## end multiple testing correction
-  
-  ## Also return the confidence intervals
-  se   <- 1 / scaleb
 
-  
+  pcorr <- if(multiplecorr.method == "WY") {
+             ## Westfall-Young like procedure as in ridge projection method,
+             ## P.Buhlmann & L.Meier
+             ## method related to the Westfall - Young procedure
+             ## constants left out since we'll rescale anyway
+             ## otherwise cov2 <- crossprod(Z)/n
+             p.adjust.wy(cov = cov2, pval = pval, N = N)
+           } else if(multiplecorr.method %in% p.adjust.methods) {
+             p.adjust(pval,method = multiplecorr.method)
+           } else
+             stop("Unknown multiple correction method specified")
+
+
   ##############################################
   ## Function to calculate p-value for groups ##
   ##############################################
-  
-  pre <- preprocess.group.testing(N = N, cov = cov2, alt = FALSE)
-  
-  group.testing.function <- function(group, alt = TRUE){
-    calculate.pvalue.for.group(brescaled  = bprojrescaled,
-                               group      = group,
-                               individual = pval,
-                               ##correct    = TRUE,
-                               alt        = alt,
-                               zz2        = pre)
+  if(suppress.grouptesting){
+    group.testing.function <- NULL
+    cluster.group.testing.function <- NULL
+  }else{
+    pre <- preprocess.group.testing(N = N, cov = cov2, conservative = FALSE)
+    
+    group.testing.function <- function(group, conservative = TRUE){
+      calculate.pvalue.for.group(brescaled    = bprojrescaled,
+                                 group        = group,
+                                 individual   = pval,
+                                 ##correct    = TRUE,
+                                 conservative = conservative,
+                                 zz2          = pre)
+    }
+    
+    cluster.group.testing.function <-
+      get.clusterGroupTest.function(group.testing.function =
+                                      group.testing.function, x = x)
   }
-
-  cluster.group.testing.function <-
-    get.clusterGroupTest.function(group.testing.function =
-                                  group.testing.function, x = x)
   
   ############################
   ## Return all information ##
   ############################
-  
+
   out <- list(pval        = as.vector(pval),
               pval.corr   = pcorr,
               groupTest   = group.testing.function,
@@ -178,6 +185,9 @@ lasso.proj <- function(x, y, family = "gaussian",
               family      = family,
               method      = "lasso.proj",
               call        = match.call())
+  if(return.Z)
+    out <- c(out,
+             list(Z = scale(Z,center=FALSE,scale=1/scaleZ)))##unrescale the Zs
 
   names(out$pval) <- names(out$pval.corr) <- names(out$bhat) <-
     names(out$sds) <- names(out$se) <- names(out$betahat) <-

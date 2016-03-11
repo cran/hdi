@@ -1,40 +1,45 @@
 \name{plot.clusterGroupBound}
-\alias{plot.clusterGroupBound}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{Plot output of hierarchical testing of groups of variables}
-\description{The functions plots the outcome of applying a lower bound on the
- l1-norm on groups of variables in a hierarchical clustering tree.} 
+\alias{plot.clusterGroupBound}
+\concept{confidence intervals}
+\concept{hierarchical clustering}
+\description{
+  The \code{\link{plot}()} method for \code{"\link{clusterGroupBound}"} objects
+  plots the outcome of applying a lower bound on the l1-norm on groups of
+  variables in a hierarchical clustering tree.
+}
 \usage{\method{plot}{clusterGroupBound}(x, cexfactor = 1, yaxis = "members",
-     col = NULL, ...)}
+     xlab = "", col = NULL, pch = 20, \dots)
+}
 \arguments{
-  \item{x}{The output of function \code{clusterGroupBound}}
-  \item{cexfactor}{Multiplies the size of the node symbols.}
-  \item{yaxis}{For the default value ("members"), the hierarchical tree
+  \item{x}{an object of \code{\link{class}} \code{"clusterGroupBound"},
+    as resulting from \code{\link{clusterGroupBound}()}.}
+  \item{cexfactor}{numeric expansion factor for the size of the node symbols.}
+  \item{yaxis}{a string; for the default \code{"members"}, the hierarchical tree
     is shown as function of cluster size on the y-axis, whereas the node
     sizes are proportional to the lower l1-norm of the respective groups
     of variables. If \code{yaxis} takes any different value, then this
     is reversed and the tree is shown against the lower l1-norm on the
     y-axis, while node sizes are now proportional to the number of
     elements in each cluster.}
-  \item{col}{The colour of the symbols for the nodes.}
-  \item{...}{Additional arguments.}
+  \item{xlab}{label used for the x-axis; by default none.}
+  \item{col}{the colour of the symbols for the nodes.}
+  \item{pch}{the plot symbol (see \code{\link{points}}) of the symbols
+    for the nodes.}
+  \item{\dots}{optional additional arguments passed to
+    \code{\link{plot.default}}.}
 }
 %\details{}
 \value{Nothing is returned}
-\references{
- Nicolai Meinshausen (2013) 
- Assumption-free confidence intervals for groups of variables in sparse
- high-dimensional regression. 
- http://arxiv.org/abs/1309.3489
-}
-\author{Nicolai Meinshausen meinshausen@stat.math.ethz.ch}
+%\references{}
+\author{Nicolai Meinshausen \email{meinshausen@stat.math.ethz.ch}}
 %\note{}
 
 \seealso{
-  Use \code{clusterGroupBound} to test all groups in a hierarchical
-  clustering tree. 
-  Use \code{groupBound} to compute the lower bound for selected
-  groups of variables. 
+  Use \code{\link{clusterGroupBound}()} to test all groups in a
+  hierarchical clustering tree.
+  Use \code{\link{groupBound}()} to compute the lower bound for selected
+  groups of variables.
 }
 \examples{
 ## Create a regression problem with block-design: p = 10, n = 30,
@@ -47,31 +52,31 @@ rho <- 0.99
 ind <- rep(1:ceiling(p / B), each = B)[1:p]
 Sigma <- diag(p)
 
-for (ii in unique(ind)){
+for (ii in unique(ind)) {
   id <- which(ind == ii)
   Sigma[id, id] <- rho
 }
 diag(Sigma) <- 1
+print.table(Sigma, zero.print=".") ## depicting the 2 blocks
 
 x <- matrix(rnorm(n * p), nrow = n) \%*\% chol(Sigma)
 
-## Create response with active variables 1 and 21 
+## Create response with active variables 1 and 21
 beta    <- rep(0, p)
 beta[1] <- 5
 
 y  <- as.numeric(x \%*\% beta + rnorm(n))
-            
+
 ## Compute the lower bound for all groups in a hierarchical clustering tree
-out <- clusterGroupBound(x, y, nsplit = 5)
+cgb5 <- clusterGroupBound(x, y, nsplit = 5)
 
 ## Plot the tree with y-axis proportional to the (log) of the number of
 ## group members and node sizes proportional to the lower l1-norm bound.
-plot(out)
+plot(cgb5)
 
 ## Show the lower bound on the y-axis and node sizes proportional to
 ## number of group members
-plot(out, yaxis = "")
+plot(cgb5, yaxis = "")
 }
-\keyword{confidence intervals}
+\keyword{htest}% from RShowDoc("KEYWORDS")
 \keyword{regression}
-\keyword{hierarchical clustering}

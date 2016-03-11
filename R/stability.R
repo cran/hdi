@@ -1,7 +1,8 @@
 stability <- function(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
                       model.selector = lasso.firstq,
                       args.model.selector = NULL,
-                      parallel = FALSE, ncores = 4, trace = FALSE)
+                      parallel = FALSE, ncores = getOption("mc.cores", 2L),
+                      verbose = FALSE)
 {
   ## Purpose:
   ## ----------------------------------------------------------------------
@@ -55,7 +56,7 @@ stability <- function(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
   }
 
   if(parallel){
-    if(trace)
+    if(verbose)
       cat("...starting parallelization of bootstrap samples\n")
     sel.mat <- matrix(unlist(mclapply(1:B, oneSample, mc.cores = ncores)),
                       nrow = B, byrow = TRUE)
@@ -63,7 +64,7 @@ stability <- function(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
   else{
     ## Subsampling
     for(b in 1:B){
-      if(trace)
+      if(verbose)
         cat("...Subsample", b, "\n")
       sel.mat[b, ] <- oneSample()
       ##-     sel <- sample(1:n, sel.n, replace = FALSE)
