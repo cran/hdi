@@ -77,7 +77,7 @@ hdi(x, y, method = "multi.split", B = NULL, fraction = 0.5,
 }
 
 \examples{
-x <- matrix(rnorm(100*1000), nrow = 100, ncol = 1000)
+x <- matrix(rnorm(100*1000), nrow = 100, ncol = 200)
 y <- x[,1] * 2 + x[,2] * 2.5 + rnorm(100)
 
 ## Multi-splitting with lasso.firstq as model selector function

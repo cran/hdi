@@ -2,23 +2,6 @@
 ## Load stuff for testing purposes ##
 #####################################
 
-##- library(glmnet)
-##- library(scalreg)
-##-
-##- setwd("/u/meierluk/R/Pkgs/hdi/pkg/R")
-##-
-##- source("hdi.R")
-##- source("methods.R")
-##- source("lasso-proj.R")
-##- source("helpers.R")
-##- source("helpers.nodewise.R")
-##-
-##- ##########################
-##- ## Load riboflavin data ##
-##- ##########################
-##-
-##- load("/u/meierluk/research/annualReview/Rcode/dsmN71.rda")
-
 library(hdi)
 
 data(riboflavin)
@@ -48,9 +31,12 @@ set.seed(3) ; fit.lasso  <- lasso.proj(x = x.use, y = y)
 set.seed(3) ; fit.lasso2 <- lasso.proj(x = 2 + 4 * x.use, y = y)
 
 ## verbose
+ncores <- if(.Platform$OS.type == "windows") 1 else getOption("mc.cores", 2L)
+  
 set.seed(3) ; fit.tmp  <- lasso.proj(x = x.use, y = y, verbose = TRUE)
 set.seed(3) ; fit.tmp2 <- lasso.proj(x = x.use, y = y,
-                                     parallel = TRUE, verbose = TRUE)
+                                     parallel = TRUE, ncores = ncores,
+                                     verbose = TRUE)
 
 ## confidence intervals
 ci.lasso  <- confint(fit.lasso,  level = 0.95)
@@ -84,8 +70,32 @@ if(!doExtras) {
     )
 }
 
+##################################
+## Code of example of help page ##
+##################################
 
-#########
-## GLM ##
-#########
+x <- matrix(rnorm(100*20), nrow = 100, ncol = 10)
+y <- x[,1] + x[,2] + rnorm(100)
+fit.lasso <- lasso.proj(x, y)
+which(fit.lasso$pval.corr < 0.05) # typically: '1' and '2' and no other
+
+## Group-wise testing of the first two coefficients
+fit.lasso$groupTest(1:2)
+
+## Hierarchical testing using distance matrix based on
+## correlation matrix
+out.clust <- fit.lasso$clusterGroupTest()
+plot(out.clust)
+
+## Fit the lasso projection method without doing the preparations
+## for group testing (saves time and memory)
+fit.lasso.faster <- lasso.proj(x, y, suppress.grouptesting = TRUE)
+
+## Use the scaled lasso for the initial estimate
+fit.lasso.scaled <- lasso.proj(x, y, betainit = "scaled lasso")
+which(fit.lasso.scaled$pval.corr < 0.05)
+
+## Use a robust estimate for the standard error
+fit.lasso.robust <- lasso.proj(x, y, robust = TRUE)
+which(fit.lasso.robust$pval.corr < 0.05)
 

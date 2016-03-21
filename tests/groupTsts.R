@@ -105,31 +105,32 @@ if(dev.interactive(TRUE)) {
                                         # decaying quickly => basically tri-diagonal blocks
 }
 
-set.seed(107)
-d1xy <- rXy(d1B, sigma = 0.5)
-showSys.time(
-  gb1 <- groupBound(x = d1xy$x, y = d1xy$y, group = 1:ncol(d1xy$x))
-) # 2.00 [lynne 2015]
-set.seed(17)# also for random splits
-d2xy <- rXy(d2B, sigma = 1/16)
-showSys.time(
-  gb2  <- groupBound(x = d2xy$x, y = d2xy$y, group = 1:ncol(d2xy$x))
-)
-showSys.time(
-  gb2g <- groupBound(x = d2xy$x, y = d2xy$y, group = pvec2grp(d2B$p.vec),
-                     silent = TRUE)
-)
-stopifnot(
-  as.vector(gb1) == 0
- ,
-  all.equal(as.vector(gb2),
-            if(b64) 6.529515 else 6.598612, tol = 2e-7)
- ,
-  all.equal(as.vector(gb2g),
-            if(b64) c(0, 0, 1.924578, 0, 1.436938, 0, 0, 0, 0.3264166)
-            else c(0, 0.01877908, 2.0447942, 0, 1.753219, 0,0,0, 0.3779607),
-            tol = 6e-7)
-)
+##- set.seed(107)
+##- d1xy <- rXy(d1B, sigma = 0.5)
+##- showSys.time(
+##-   gb1 <- groupBound(x = d1xy$x, y = d1xy$y, group = 1:ncol(d1xy$x))
+##- ) # 2.00 [lynne 2015]
+##- set.seed(17)# also for random splits
+##- d2xy <- rXy(d2B, sigma = 1/16)
+##- showSys.time(
+##-   gb2  <- groupBound(x = d2xy$x, y = d2xy$y, group = 1:ncol(d2xy$x))
+##- )
+##- showSys.time(
+##-   gb2g <- groupBound(x = d2xy$x, y = d2xy$y, group = pvec2grp(d2B$p.vec),
+##-                      silent = TRUE)
+##- )
+##- 
+##- stopifnot(
+##-   as.vector(gb1) == 0
+##-  ,
+##-   all.equal(as.vector(gb2),
+##-             if(b64) 6.529515 else 6.598612, tol = 2e-7)
+##-  ,
+##-   all.equal(as.vector(gb2g),
+##-             if(b64) c(0, 0, 1.924578, 0, 1.436938, 0, 0, 0, 0.3264166)
+##-             else c(0, 0.01877908, 2.0447942, 0, 1.753219, 0,0,0, 0.3779607),
+##-             tol = 6e-7)
+##- )
 
 if(do.Extras) { ## save time in regular  'R CMD check' ---------
 

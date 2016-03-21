@@ -1,8 +1,8 @@
 Package: hdi
 Type: Package
 Title: High-Dimensional Inference
-Version: 0.1-5
-Date: 2016-03-11
+Version: 0.1-6
+Date: 2016-03-21
 Author: Lukas Meier [aut, cre], Ruben Dezeure [aut], Nicolai Meinshausen [aut], Martin Maechler [aut], Peter Buehlmann [aut]
 Maintainer: Lukas Meier <meier@stat.math.ethz.ch>
 Description: Implementation of multiple approaches to perform inference in high-dimensional models.
@@ -15,6 +15,6 @@ SuggestsNote: for tests only
 Encoding: UTF-8
 License: GPL
 NeedsCompilation: no
-Packaged: 2016-03-11 11:00:49 UTC; meierluk
+Packaged: 2016-03-21 13:32:38 UTC; meierluk
 Repository: CRAN
-Date/Publication: 2016-03-11 19:19:23
+Date/Publication: 2016-03-21 23:19:29

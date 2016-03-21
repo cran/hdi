@@ -15,7 +15,9 @@ fit.tmp <- stability(x, y, EV = 1, verbose = TRUE) ## to check verbose
 fit.stab
 fit.stab$freq[1:10] ## selection frequency of the first 10 predictors
 
-fit.stab2 <- stability(x, y, EV = 1, parallel = TRUE, verbose = TRUE)
+ncores <- if(.Platform$OS.type == "windows") 1 else getOption("mc.cores", 2L)
+fit.stab2 <- stability(x, y, EV = 1, parallel = TRUE, ncores = ncores,
+                       verbose = TRUE)
 fit.stab2
 fit.stab2$freq[1:10]
  

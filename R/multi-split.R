@@ -28,7 +28,7 @@ multi.split <- function(x, y, B = 100, fraction = 0.5,
   ## all variables are taken from the function environment
   oneSplit <- function(b) { # b-th split {e.g. called from *apply()
     pvals.v         <- rep(1, p)
-    sel.models <- logical(p) ## FALSE by default
+    sel.models      <- logical(p) ## FALSE by default
     lci.v           <- rep(-Inf, p)
     uci.v           <- rep(Inf, p)
     centers.v       <- rep(NA, p)
@@ -75,7 +75,7 @@ multi.split <- function(x, y, B = 100, fraction = 0.5,
         pvals.v[sel.model] <- pmin(sel.pval * p.sel, 1) ## new
 
         if(ci) { ## Calculations of confidence intervals
-          if(!all.equal(diff(gamma), rep(1 / B, length(gamma) - 1)))
+          if(!all(abs(gamma * B %% 1) <= 10^(-5)))
             warning("Duality might be violated because of choice of gamma. Use steps of length 1 / B")
           
           if(identical(classical.fit, lm.pval)) {
@@ -169,6 +169,7 @@ multi.split <- function(x, y, B = 100, fraction = 0.5,
   ############################################
   ## Allow hierarchical testing with result ##
   ############################################
+  
   clusterGroupTest <-
     if(return.selmodels)
       function(hcloutput,

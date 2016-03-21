@@ -1,8 +1,7 @@
 \name{clusterGroupBound}
 \alias{clusterGroupBound}
 %%--- NB:  quite similar to ./groupBound.rd --- keep in sync !
-\title{Hierarchical Structure Group Test of Variable Importance in
-  High-Dimensional Linear Model}% <- still too long
+\title{Hierarchical structure group tests in linear model}
 \description{
   Computes confidence intervals for the l1-norm of groups of linear regression
   coefficients in a hierarchical clustering tree.
@@ -36,10 +35,10 @@ clusterGroupBound(x, y, method = "average",
     splits are aggregated using the (1-eps) quantile. See reference
     below for more details.}
   \item{hcloutput}{optionally, the value of a \code{\link{hclust}()}
-    call.  If it is provided, the arguments \code{dist} and \code{method}
+    call. If it is provided, the arguments \code{dist} and \code{method}
     are ignored.}
   \item{nsplit}{the number of data splits used.}
-  \item{s}{the dimensionality of the projection that is used.  Lower
+  \item{s}{the dimensionality of the projection that is used. Lower
     values lead to faster computation and if \eqn{n > 50}, then \code{s}
     is set to 50 if left unspecified, to avoid lengthy computations.}
   \item{silent}{logical enabling progress output.}
@@ -81,35 +80,36 @@ clusterGroupBound(x, y, method = "average",
   test all groups in a hierarchical clustering tree.
 }
 \examples{
-## Create a regression problem with block-design: p = 10, n = 30,
-## block size B = 5 and within-block correlation of rho = 0.99
-p   <- 10
-n   <- 100
-B   <- 5
-rho <- 0.99
+%% the following code is in donttest environment to
+%% speed-up computing
+%% >>> copy any changes to "../tests/ex-clusterGroupBound.R" <<< to ensure
+%% code is running
+## Create a regression problem with correlated design (n = 10, p = 3):
+## a block of size 2 and a block of size 1, within-block correlation is 0.99
 
-ind <- rep(1:ceiling(p / B), each = B)[1:p]
+set.seed(29)
+p   <- 3
+n   <- 10
+
 Sigma <- diag(p)
-
-for (ii in unique(ind)){
-  id <- which(ind == ii)
-  Sigma[id, id] <- rho
-}
-diag(Sigma) <- 1
+Sigma[1,2] <- Sigma[2,1] <- 0.99
 
 x <- matrix(rnorm(n * p), nrow = n) \%*\% chol(Sigma)
 
-## Create response with active variables 1 and 21
+## Create response with active variable 1
 beta    <- rep(0, p)
 beta[1] <- 5
 
 y  <- as.numeric(x \%*\% beta + rnorm(n))
-
-out <- clusterGroupBound(x, y, nsplit = 5)
+\donttest{
+out <- clusterGroupBound(x, y, nsplit = 4) ## use larger value for nsplit!
 
 ## Plot and print the hierarchical group-test
 plot(out)
 print(out)
+out$members
+out$lowerBound
+}
 }
 \keyword{confidence intervals}
 \keyword{regression}
