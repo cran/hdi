@@ -19,6 +19,7 @@ importFrom("scalreg", scalreg)
 ## Exports
 export(hdi, fdr.adjust, stability,
        lasso.firstq, lasso.proj, lasso.cv,
+       boot.lasso.proj,
        ridge.proj,
        lm.pval, lm.ci, glm.pval,
        multi.split,

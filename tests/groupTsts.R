@@ -69,6 +69,7 @@ pvec2grp <- function(pv) {
 }
 
 if(FALSE) { ## not used currently
+  suppressWarnings(RNGversion("3.5.0"))
   set.seed(47) # <-> iteration = NA to use R's seed
   d1 <- rXb(n = 64, p =  16, s0 =  7, iteration=NA, do2S = FALSE)
   d2 <- rXb(n = 64, p = 256, s0 = 12, iteration=NA, do2S = FALSE)
@@ -77,7 +78,7 @@ if(FALSE) { ## not used currently
   yhat.1 <- with(d1, drop(x %*% beta))
   yhat.2 <- with(d2, drop(x %*% beta))
 }
-
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(20)
 d1B <- rXbBlock(p = c(7, 8, 7), s0 = c(2, 4, 1), n = 16)
 p2 <- sample(c(32, 16, 16, 16, 12, 12, 5, 5, 5))
@@ -135,6 +136,7 @@ if(dev.interactive(TRUE)) {
 if(do.Extras) { ## save time in regular  'R CMD check' ---------
 
   ##--------------- 3 --
+  suppressWarnings(RNGversion("3.5.0"))
   set.seed(27)# also for random splits
   d3xy <- rXy(d3B, sigma = 1/16)
   showSys.time(
@@ -143,6 +145,7 @@ if(do.Extras) { ## save time in regular  'R CMD check' ---------
   stopifnot(
     all.equal(as.vector(gb3), if(b64) 7.3760622 else 7.7908584, tol = 2e-7)
   )
+  suppressWarnings(RNGversion("3.5.0"))
   set.seed(19)# for random splits
   showSys.time(
     gb3g <- groupBound(x = d3xy$x, y = d3xy$y, group = pvec2grp(d3B$p.vec),
@@ -156,6 +159,7 @@ if(do.Extras) { ## save time in regular  'R CMD check' ---------
   )
 
   ##--------------- 4 --
+  suppressWarnings(RNGversion("3.5.0"))
   set.seed(37)# also for random splits
   d4xy <- rXy(d4B, sigma = 1/16)
   showSys.time(

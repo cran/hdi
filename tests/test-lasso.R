@@ -26,14 +26,17 @@ x.use <- x[,1:p.]
 ######################
 
 ## set seed because of cv
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(3) ; fit.lasso  <- lasso.proj(x = x.use, y = y)
 ## Check standardization, i.e., equivariance :
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(3) ; fit.lasso2 <- lasso.proj(x = 2 + 4 * x.use, y = y)
 
 ## verbose
 ncores <- if(.Platform$OS.type == "windows") 1 else getOption("mc.cores", 2L)
-  
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(3) ; fit.tmp  <- lasso.proj(x = x.use, y = y, verbose = TRUE)
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(3) ; fit.tmp2 <- lasso.proj(x = x.use, y = y,
                                      parallel = TRUE, ncores = ncores,
                                      verbose = TRUE)

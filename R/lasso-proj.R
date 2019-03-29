@@ -9,7 +9,8 @@ lasso.proj <- function(x, y, family = "gaussian",
                        verbose = FALSE,
                        return.Z = FALSE,
                        suppress.grouptesting = FALSE,
-                       robust = FALSE)
+                       robust = FALSE,
+                       do.ZnZ = FALSE)
 {
   ## Purpose:
   ## An implementation of the LDPE method http://arxiv.org/abs/1110.2563
@@ -23,7 +24,7 @@ lasso.proj <- function(x, y, family = "gaussian",
   ## pval.corr:  multiple testing corrected p-values for every parameter
   ## betahat:    initial estimate by the scaled lasso of \beta^0
   ## bhat:       de-sparsified \beta^0 estimate used for p-value calculation
-  ## sigmahat:   \sigma estimate coming from the scaled lasso
+  ## sigmahat:   \sigma estimate coming from the lasso
   ## ----------------------------------------------------------------------
   ## Author: Ruben Dezeure, Date: 18 Oct 2013 (initial version),
   ## in part based on an implementation of the ridge projection method
@@ -40,27 +41,13 @@ lasso.proj <- function(x, y, family = "gaussian",
   else
     sds <- rep(1, p)
 
-  ## *center* (scale) the columns
-  x <- scale(x, center = TRUE, scale = standardize)
-
-  dataset <- switch(family,
-                    "gaussian" = {
-                      list(x = x, y = y)
-                    },
-                    {
-                      switch.family(x = x, y = y,
-                                    family = family)
-                    })
-
-  ## center the columns and the response to get rid of the intercept
-  x <- scale(dataset$x, center = TRUE, scale = FALSE)
-  y <- scale(dataset$y, scale = FALSE)
-  y <- as.numeric(y)
-
-  ## Warning: should we allow user to still specify their
-  ## own Z here?
-  ## Z <- NULL##will have to recalculate Z
-
+  pdata <- prepare.data(x = x,
+                        y = y,
+                        standardize = standardize,
+                        family = family)
+  x <- pdata$x
+  y <- pdata$y
+  
   ## force sigmahat to 1 when doing glm!
   if(family == "binomial")
     sigma <- 1
@@ -68,61 +55,46 @@ lasso.proj <- function(x, y, family = "gaussian",
   ######################################
   ## Calculate Z using nodewise lasso ##
   ######################################
-
-  if(is.null(Z)){
-    nodewiselasso.out <- score.nodewiselasso(x = x,
-                                             wantTheta = FALSE,
-                                             parallel = parallel,
-                                             ncores = ncores,
-                                             cv.verbose = verbose)
-    Z <- nodewiselasso.out$out$Z
-    scaleZ <- nodewiselasso.out$out$scaleZ
-  }else{
-    ## Check if normalization is fulfilled
-    if(!isTRUE(all.equal(rep(1, p), colSums(Z * x) / n, tolerance = 10^-8))){
-      ##no need to print stuff to the user, this is only an internal detail
-      rescale.out <- score.rescale(Z = Z, x = x)
-      Z <- rescale.out$Z
-      scaleZ <- rescale.out$scaleZ
-    }
-  }
-
-
+  
+  Zout <- calculate.Z(x = x,
+                      parallel = parallel,
+                      ncores = ncores,
+                      verbose = verbose,
+                      Z = Z,
+                      do.ZnZ = do.ZnZ)
+  Z <- Zout$Z
+  scaleZ <- Zout$scaleZ
+  
   ###################################
-  ## Projection estimator and bias ##
+  ## de-sparsified Lasso estimator ##
   ###################################
-  bproj <- crossprod(Z, y) / n
-
-  ## Bias estimate based on lasso estimate
+  
+  ## Initial Lasso estimate
   initial.estimate <- initial.estimator(betainit = betainit, sigma = sigma,
                                         x = x, y = y)
   betalasso <- initial.estimate$beta.lasso
   sigmahat <- initial.estimate$sigmahat
 
-  ## Subtract bias
-  bias <- numeric(p)
-  for(j in 1:p){ ## replace loop?
-    bias[j] <- (t(Z[,j]) %*% x[,-j]) %*% betalasso[-j] / n
-  }
-
-  bproj <- bproj - bias
-
+  ## de-sparsified Lasso
+  bproj <- despars.lasso.est(x = x,
+                             y = y,
+                             Z = Z,
+                             betalasso = betalasso)
+  
   #########################
   ## p-Value calculation ##
   #########################
 
-  scaleb <-
-    if(robust)
-      1/sandwich.var.est.stderr(x=x,y=y,betainit=betalasso,Z=Z)
-    else
-      ## Determine normalization factor
-      n / (sigmahat * sqrt(colSums(Z^2))) ##sqrt(diag(crossprod(Z)))
-
-  ## Also return the confidence intervals
-  se <- 1 / scaleb
-
+  se <- est.stderr.despars.lasso(x = x,
+                                 y = y,
+                                 Z = Z,
+                                 betalasso = betalasso,
+                                 sigmahat = sigmahat,
+                                 robust = robust)
+  scaleb <- 1/se
+  
   bprojrescaled <- bproj * scaleb
-
+  
   ## Calculate p-value
   pval <- 2 * pnorm(abs(bprojrescaled), lower.tail = FALSE)
 

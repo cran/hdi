@@ -155,7 +155,7 @@ p.adjust.wy <- function(cov, pval, N = 10000)
   zz  <- mvrnorm(N, rep(0, ncol(cov)), cov)
   zz2 <- scale(zz, center = FALSE, scale = sqrt(diag(cov)))
   Gz  <- apply(2 * pnorm(abs(zz2),lower.tail = FALSE), 1, min)
-
+  
   ## Corrected p-values  pcorr
   ecdf(Gz)(pval)
 }
@@ -474,7 +474,7 @@ sandwich.var.est.stderr <- function(x,y,betainit,Z){
   ## x: the design matrix
   ## y: the response vector
   ## betainit: the initial estimate
-  ## Z:       the residuals of the nodewis regressions
+  ## Z:       the residuals of the nodewise regressions
   ## ----------------------------------------------------------------------
   ## Return values:
   ## se.robust: the robust estimate for the standard error of the corresponding de-sparsified lasso fit
@@ -504,7 +504,9 @@ sandwich.var.est.stderr <- function(x,y,betainit,Z){
   eps.tmp <- as.vector(y - x%*%betainit)
 
   ## should these esp.tmp be forced to have mean 0?
-
+  ##YES! as if we fit with intercept
+  eps.tmp <- eps.tmp-mean(eps.tmp)
+  
   sigmahatZ.direct <- sqrt(colSums(sweep(eps.tmp*Z, MARGIN = 2,
                                          STATS = crossprod(eps.tmp,Z)/n,
                                          FUN = `-`)^2))
@@ -608,6 +610,8 @@ initial.estimator <- function(betainit,x,y,sigma)
     warning("Overriding the error variance estimate with your own value. The initial estimate implies an error variance estimate and if they don't correspond the testing might not be correct anymore.") 
   }
 
+  lambda <- NULL
+  
   if(is.numeric(betainit))
   {
     beta.lasso <- betainit
@@ -628,6 +632,8 @@ initial.estimator <- function(betainit,x,y,sigma)
                                   initial.lasso.method=betainit)
     beta.lasso <- initial.fit$betalasso
 
+    lambda <- initial.fit$lambda
+    
     if(is.null(sigma))
     {
       sigmahat <- initial.fit$sigmahat
@@ -638,5 +644,157 @@ initial.estimator <- function(betainit,x,y,sigma)
   }
   ## return
   list(beta.lasso = beta.lasso,
-       sigmahat = sigmahat)
+       sigmahat = sigmahat,
+       lambda = lambda)
+}
+
+prepare.data <- function(x, y, standardize, family)
+{
+  ## *center* (scale) the columns
+  x <- scale(x, center = TRUE, scale = standardize)
+  
+  dataset <- switch(family,
+                    "gaussian" = {
+                      list(x = x, y = y)
+                    },
+                    {
+                      switch.family(x = x, y = y,
+                                    family = family)
+                    })
+  
+  ## center the columns and the response to get rid of the intercept
+  x <- scale(dataset$x, center = TRUE, scale = FALSE)
+  y <- scale(dataset$y, scale = FALSE)
+  y <- as.numeric(y)
+  list(x=x,y=y)
+}
+
+despars.lasso.est <- function(x, y, Z,
+                              betalasso)
+{
+  ## Purpose:
+  ## The desparsified Lasso estimator
+  ## This code allows for Y and betalasso to be matrices, which is useful
+  ## when computing this for the bootstrap
+  ## ----------------------------------------------------------------------
+  ## Arguments:
+  ## x: the design matrix
+  ## y: the response vector or matrix of response vectors
+  ## betalasso: the initial estimate or matrix of initial estimate vectors
+  ## Z:       the residuals of the nodewise regressions
+  ## ----------------------------------------------------------------------
+  ## Return values:
+  ## b: the de-sparsified Lasso estimates
+  ## ----------------------------------------------------------------------
+  ## Author: Ruben Dezeure, Date: 15 June 2016 (initial version)
+  ## Based on older private code
+  
+  b <- crossprod(Z,y-x%*%betalasso)/nrow(x) + betalasso
+  if(ncol(b) == 1)
+    b <- as.vector(b)
+  b
+}
+
+est.stderr.despars.lasso <- function(x, y, Z,
+                                     betalasso, sigmahat,
+                                     robust,
+                                     robust.div.fixed = FALSE)
+{
+  ## Purpose:
+  ## estimate the standard error (either robust or non-robust) for the desparsified Lasso estimator
+  ## ----------------------------------------------------------------------
+  ## Arguments:
+  ## x: the design matrix
+  ## y: the response vector or matrix of response vectors
+  ## Z:       the residuals of the nodewise regressions
+  ## betalasso: the initial estimate or matrix of initial estimate vectors
+  ## sigmahat: estimate for the noise standard  deviation
+  ## robust: if the standard error should be the robust version or the non-robust version
+  ## robust.div.fixed: if we should use the 1/n standardization or 1/(n-hat(s))
+  ## ----------------------------------------------------------------------
+  ## Return values:
+  ## stderr: the estimate for the standard error of the corresponding de-sparsified lasso fit
+  ## ----------------------------------------------------------------------
+  ## Author: Ruben Dezeure, Date: 15 June 2016 (initial version)
+  ## Based on older private code
+  
+  if(robust){    
+    stderr <- sandwich.var.est.stderr(x=x,y=y,Z=Z,
+                                      betainit=betalasso)
+    n <- nrow(x)
+
+    if(robust.div.fixed)
+      stderr <- stderr*n/(n-sum(betalasso!=0))
+  }else{    
+    stderr <- (sigmahat*sqrt(diag(crossprod(Z))))/nrow(x)    
+  }
+  
+  stderr  
+}
+
+boot.initial.fit <- function(x,
+                             ystar,
+                             betainit,
+                             lambda,
+                             parallel,
+                             ncores)
+{
+  if(is.numeric(betainit))
+    stop("We need to somehow specify the initial lasso method for the bootstrap!")
+  args <- list(FUN = do.initial.fit,
+               x = list(x = x),
+               y = split(ystar, col(ystar)),
+               initial.lasso.method = betainit,
+               SIMPLIFY = FALSE,
+               mc.cores = ncores)
+  
+  if(!is.null(lambda))## Implement the bootstrap shortcut
+    args <- c(args, list(lambda = lambda))
+  
+  out.init.star <- do.call(mcmapply,
+                           args = args)  
+}
+
+boot.se <- function(x,
+                    ystar,
+                    Z,
+                    betainitstar,
+                    sigmahatstar,
+                    robust,
+                    robust.div.fixed = FALSE,
+                    parallel,
+                    ncores)
+{
+  if(robust)
+  {
+    sestar <- mcmapply(est.stderr.despars.lasso,
+                       x = list(x = x),
+                       y = split(ystar, col(ystar)),
+                       Z = list(Z = Z),
+                       betalasso = split(betainitstar, col(betainitstar)),
+                       sigmahat = sigmahatstar,
+                       robust = robust,
+                       robust.div.fixed = robust.div.fixed,
+                       mc.cores = ncores)
+  }else{
+    sestar <- outer(sqrt(colSums(Z^2))/nrow(x),
+                    sigmahatstar)
+  }
+  
+  sestar
+}
+
+resample <- function(r,
+                     B,
+                     wild)
+{
+  if(wild)
+  {
+    Ui <- replicate(B,rnorm(length(r)))
+    rs <- r * Ui
+  }else{
+    rs <- replicate(B,
+                    sample(r, replace=TRUE))
+  }
+  rs
 }

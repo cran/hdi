@@ -4,6 +4,19 @@
 \title{hdi News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 0.1-7 (latest update 2016-06-24, svn 155)}{
+  \itemize{
+    \item fixed issues with RNG.
+  }
+}
+
+\section{CHANGES IN VERSION 0.1-6a (latest update 2016-06-24, svn 152)}{
+  \itemize{
+    \item added bootstrapping functionality for the de-sparsified Lasso
+    \item added the missing Z & Z functionality for the lasso projection method
+  }
+}
+
 \section{CHANGES IN VERSION 0.1-6 (2016-03-21, svn r147)}{
   \itemize{
     \item changed condition for warning message for confidence intervals

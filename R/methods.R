@@ -181,15 +181,16 @@ plot.clusterGroupTest <- function(x, ...)
 confint.hdi <- function(object, parm, level = 0.95, ...)
 {
   ## Author: Lukas Meier, Date: 27 Jun 2014, 11:30
-
+  
   meth <- object$method
   obj <- switch(meth,
                 "lasso.proj"  = object$bhat,
+                "boot.lasso.proj"  = object$bhat,
                 "ridge.proj"  = object$bhat,
                 "multi.split" = object$pval.corr,
                 ## otherwise :
                 stop("Not supported object type ", meth))
-
+  
   pnames <- if(is.null(names(obj))) seq_along(obj) else names(obj)
   if(missing(parm))
     parm <- pnames
@@ -210,6 +211,25 @@ confint.hdi <- function(object, parm, level = 0.95, ...)
       warning("Ignoring argument 'level', using 'ci.level' of fitted object")
     m <- cbind(object$lci[parm],
                object$uci[parm])
+  } else if(meth == "boot.lasso.proj"){
+    if(is.null(object$cboot.dist))
+    {
+      stop("Bootstrap output is missing the bootstrap distribution necessary to compute confidence intervals. Rerun the bootstrap with the correct options to pass on the bootstrap distribution.")
+    }
+
+    alpha <- 1 - level
+    
+    if((alpha/2 * object$B)%%1 == 0)
+    {
+      quantile.type <- 1
+    }else{
+      quantile.type <- 7##this is the default
+    }
+    
+    qstar <- apply(object$cboot.dist,1,quantile,probs=c(alpha/2,1-alpha/2),
+                   type=quantile.type)
+    m <- cbind(obj[parm] - qstar[2,parm],
+                obj[parm] - qstar[1,parm])
   }
 
   dimnames(m) <- list(parm, c("lower", "upper"))

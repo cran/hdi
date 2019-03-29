@@ -3,15 +3,16 @@
 \alias{lasso.proj}
 \description{
   Compute p-values based on the lasso projection method, also known as
-  the de-sparsified Lasso.
-  %% write more
+  the de-sparsified Lasso, using an asymptotic gaussian approximation
+  to the distribution of the estimator.
 }
 \usage{
 lasso.proj(x, y, family = "gaussian", standardize = TRUE,
            multiplecorr.method = "holm", N = 10000,
            parallel = FALSE, ncores = getOption("mc.cores", 2L),
            betainit = "cv lasso", sigma = NULL, Z = NULL, verbose = FALSE,
-           return.Z = FALSE, suppress.grouptesting = FALSE, robust = FALSE)
+           return.Z = FALSE, suppress.grouptesting = FALSE, robust = FALSE,
+	   do.ZnZ = FALSE)
 }
 \arguments{
   \item{x}{Design matrix (without intercept).}
@@ -45,6 +46,13 @@ lasso.proj(x, y, family = "gaussian", standardize = TRUE,
     computation and memory usage. The output will also be smaller.}
   \item{robust}{Uses a robust variance estimation procedure to be able
     to deal with model misspecification.}
+  \item{do.ZnZ}{Use a slightly different way of choosing tuning
+    parameters to compute Z, called Z&Z based on Zhang and Zhang (2014).
+    This choice of tuning parameter
+    results in a slightly higher variance of the estimator.
+    More concretely, it achieves a 25% inflation of the average theoretical
+    variance of the estimator (over j=1..ncol(x)) in comparison to tuning with
+    cross-validation.}
 }
 \value{
   \item{pval}{Individual p-values for each parameter.}
@@ -93,6 +101,9 @@ which(fit.lasso$pval.corr < 0.05) # typically: '1' and '2' and no other
 ## Group-wise testing of the first two coefficients
 fit.lasso$groupTest(1:2)
 
+##Compute confidence intervals
+confint(fit.lasso, level = 0.95)
+
 \donttest{
 ## Hierarchical testing using distance matrix based on
 ## correlation matrix
@@ -111,6 +122,11 @@ which(fit.lasso.scaled$pval.corr < 0.05)
 fit.lasso.robust <- lasso.proj(x, y, robust = TRUE)
 which(fit.lasso.robust$pval.corr < 0.05)
 }
+
+## Perform the Z&Z version of the lasso projection method
+fit.lasso <- lasso.proj(x, y, do.ZnZ = TRUE)
+
+which(fit.lasso$pval.corr < 0.05) # typically: '1' and '2' and no other
 }
 \keyword{models}
 \keyword{regression}

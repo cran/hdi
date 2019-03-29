@@ -26,3 +26,8 @@ which(fit.lasso.scaled$pval.corr < 0.05)
 ## Use a robust estimate for the standard error
 fit.lasso.robust <- lasso.proj(x, y, robust = TRUE)
 which(fit.lasso.robust$pval.corr < 0.05)
+
+## Perform the Z&Z version of the lasso projection method
+fit.lasso <- lasso.proj(x, y, do.ZnZ = TRUE)
+
+which(fit.lasso$pval.corr < 0.05) # typically: '1' and '2' and no other

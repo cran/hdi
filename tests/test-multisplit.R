@@ -4,12 +4,15 @@
 
 library(hdi)
 
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(123)
 
 x <- matrix(rnorm(100*100), nrow = 100, ncol = 100)
 y <- x[,1] + x[,2] + rnorm(100)
-
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(3) ; fit.mult <- multi.split(x, y)
+
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(3) ; fit.tmp <- multi.split(x, y, verbose = TRUE)
 
 ## dput(fit.mult$pval.corr)

@@ -4,6 +4,42 @@
 ## and can also calculate the Thetahat matrix as in
 ## http://arxiv.org/abs/1303.0518
 
+calculate.Z <- function(x,
+                        parallel,
+                        ncores,
+                        verbose,
+                        Z,
+                        do.ZnZ = FALSE,
+                        debug.verbose = FALSE)
+{
+  if(is.null(Z)){
+    message("Nodewise regressions will be computed as no argument Z was provided.")
+    message("You can store Z to avoid the majority of the computation next time around.")
+    message("Z only depends on the design matrix x.")
+    nodewiselasso.out <- score.nodewiselasso(x = x,
+                                             wantTheta = FALSE,
+                                             parallel = parallel,
+                                             ncores = ncores,
+                                             cv.verbose = verbose || debug.verbose,
+                                             do.ZnZ = do.ZnZ,
+                                             verbose = debug.verbose)
+    Z <- nodewiselasso.out$out$Z
+    scaleZ <- nodewiselasso.out$out$scaleZ
+  }else{
+    scaleZ <- rep(1,ncol(Z))
+    
+    ## Check if normalization is fulfilled
+    if(!isTRUE(all.equal(rep(1, ncol(x)), colSums(Z * x) / nrow(x), tolerance = 10^-8))){
+      ##no need to print stuff to the user, this is only an internal detail
+      rescale.out <- score.rescale(Z = Z, x = x)
+      Z <- rescale.out$Z
+      scaleZ <- rescale.out$scaleZ
+    }
+  }
+  list(Z = Z,
+       scaleZ = scaleZ)
+}
+
 score.nodewiselasso <- function(x,
                                 wantTheta = FALSE,
                                 verbose = FALSE,
@@ -12,7 +48,8 @@ score.nodewiselasso <- function(x,
                                 ncores = 8,
                                 oldschool = FALSE,
                                 lambdatuningfactor = 1,
-                                cv.verbose = FALSE)
+                                cv.verbose = FALSE,
+                                do.ZnZ = TRUE)
 {
   ## Purpose:
   ## This function calculates the score vectors Z OR the matrix of nodewise
@@ -45,18 +82,36 @@ score.nodewiselasso <- function(x,
     cat(paste("lambda.min is", cvlambdas$lambda.min), "\n")
     cat(paste("lambda.1se is", cvlambdas$lambda.1se), "\n")
   }
-  
-  if(lambdatuningfactor == "lambda.1se"){
+
+  if(do.ZnZ)
+  {
+    bestlambda <- improve.lambda.pick(x = x,
+                                      parallel = parallel,
+                                      ncores = ncores,
+                                      lambdas = lambdas,
+                                      bestlambda = cvlambdas$lambda.min,
+                                      verbose = verbose)
     if(verbose)
-      cat("lambda.1se used for nodewise tuning\n")
-    ## We use lambda.1se for bestlambda now!!!
-    bestlambda <- cvlambdas$lambda.1se
+    {
+      cat("Doing Z&Z technique for picking lambda\n")
+      cat("The new lambda is",bestlambda,"\n")
+
+      cat("In comparison to the cross validation lambda, lambda = c * lambda_cv\n")
+      cat("c=",bestlambda/cvlambdas$lambda.min,"\n")## Some info on how much smaller lambda truly is
+      }
+  }else{
+    if(lambdatuningfactor == "lambda.1se"){
+      if(verbose)
+        cat("lambda.1se used for nodewise tuning\n")
+      ## We use lambda.1se for bestlambda now!!!
+      bestlambda <- cvlambdas$lambda.1se
     }else{
       if(verbose)
         cat("lambdatuningfactor used is", lambdatuningfactor, "\n")
       
       bestlambda <- cvlambdas$lambda.min * lambdatuningfactor
     }
+  }
   
   if(verbose){
     cat("Picked the best lambda:", bestlambda, "\n")
@@ -81,6 +136,126 @@ score.nodewiselasso <- function(x,
                      bestlambda = bestlambda)
   return(return.out)
 }
+
+
+improve.lambda.pick <- function(x,
+                                parallel,
+                                ncores,
+                                lambdas,
+                                bestlambda,
+                                verbose)
+{
+  ## let's improve the lambda choice by using the Z&Z procedure
+  ## (But picking the one new lambda value not one for each j)
+  
+  lambdas <- sort(lambdas, decreasing = TRUE) ## Such that we have a natural ordering of decreasing lambdas --> ordering by increasing variance
+
+  ## Compute the mean theoretical variance for every lambda value
+  M <- calcM(x = x,
+             lambdas = lambdas,
+             parallel = parallel,
+             ncores = ncores)
+  
+  Mcv <- M[which(lambdas == bestlambda)] ## Get the current M alue
+  
+  if(length(which(M < 1.25*Mcv))>0){
+    ## There exists a 25% inflated M in this range of lambda choices
+    lambdapick <- min(lambdas[which(M < 1.25*Mcv)])
+  }else{
+    if(verbose)
+      cat("no better lambdapick found\n")
+     lambdapick <- bestlambda
+   }
+
+  if(max(which(M < 1.25*Mcv)) < length(lambdas))
+  {
+    ## There is an interval of potential lambda values that give close to the exact 25% inflation
+    ## Let's refine the interval to try to find a more accurate solution
+    if(verbose)
+      cat("doing a second step of discretisation of the lambda space to improve the lambda pick\n")
+
+    lambda.number <- max(which(M < 1.25*Mcv))##assumes the lambdas are sorted from big to small
+    newlambdas <- seq(lambdas[lambda.number],lambdas[lambda.number+1], (lambdas[lambda.number+1]-lambdas[lambda.number])/100)
+    newlambdas <- sort(newlambdas,decreasing=TRUE)##convention
+    M2 <- calcM(x=x,
+                lambdas=newlambdas,
+                parallel=parallel,
+                ncores=ncores)
+    
+    if(length(which(M2 < 1.25*Mcv))>0){
+      evenbetterlambdapick <- min(newlambdas[which(M2 < 1.25*Mcv)])
+    }else{
+      if(verbose)
+        cat("no -even- better lambdapick found\n")
+      evenbetterlambdapick <- lambdapick
+    }
+    
+    if(is.infinite(evenbetterlambdapick))
+    {##it is possible that when redoing the fits the M2 value is all of a sudden higher for all lambdas in our newlambdas range
+
+      ##just leave lambdapick as it is
+      if(verbose)
+      {
+        cat("hmmmm the better lambda pick after the second step of discretisation is Inf\n")
+        cat("M2 is\n")
+        cat(M2,"\n")
+        cat("Mcv is\n")
+        cat(Mcv,"\n")
+        cat("and which(M2 < 1.25* Mcv) is\n")
+        cat(which(M2 < 1.25*Mcv),"\n")
+      }
+    }else{
+      lambdapick <- evenbetterlambdapick
+    }
+  }
+  
+  return(lambdapick)
+}
+
+calcM <- function(x,
+                  lambdas,
+                  parallel,
+                  ncores)
+{
+  ## Compute the theoretical variances for each j
+  ## for each choice for lambda
+  ## Return the means over the j for each distinct lambda value
+  
+  if(parallel)
+    {
+      M <- mcmapply(FUN=calcMforcolumn,
+                    x=list(x=x),
+                    j=1:ncol(x),
+                    lambdas=list(lambdas=lambdas),
+                    mc.cores=ncores)
+    }else{
+      M <- mapply(FUN=calcMforcolumn,
+                  j=1:ncol(x),
+                  x=list(x=x),
+                  lambdas=list(lambdas=lambdas))
+    }
+  ##every row of M contains for a particular lambda choice the value of M for a particular nodewise regression
+  ##M should be of dimension nxp (100x500)
+  M <- apply(M,1,mean)
+  return(M)
+}
+
+calcMforcolumn <- function(x,
+                           j,
+                           lambdas)
+{
+  ## do a nodewise regression and calc the l2 norm ^2 of the residuals
+  ## and the inner product of Zj and Xj
+  glmnetfit <- glmnet(x[,-j],x[,j],
+                      lambda=lambdas)
+  predictions <- predict(glmnetfit,x[,-j],s=lambdas)
+  Zj <- x[,j] - predictions##the columns are the residuals for the different lambda
+
+  Znorms <- apply(Zj^2,2,sum)
+  Zxjnorms <- as.vector(crossprod(Zj,x[,j])^2)
+  return(Znorms/Zxjnorms)
+}
+
 
 score.getThetaforlambda <- function(x, lambda, parallel = FALSE, ncores = 8,
                                     oldschool = FALSE, verbose = FALSE,
@@ -242,9 +417,9 @@ cv.nodewise.err.unitfunction <- function(c, K, dataselects, x, lambdas,
     interesting.points <- round(c(1/4,2/4,3/4,4/4)*p)
     names(interesting.points) <- c("25%","50%","75%","100%")
     if(c %in% interesting.points){
-      cat("The expensive computation is now",
-          names(interesting.points)[c == interesting.points],
-          "done\n")
+      message("The expensive computation is now ",
+              names(interesting.points)[c == interesting.points],
+              " done")
     }
   }
   

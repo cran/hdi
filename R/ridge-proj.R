@@ -34,25 +34,12 @@ ridge.proj <- function(x, y,
   else
     sds <- rep(1, p)
 
-  ## *center* (scale) the columns
-  x <- scale(x, center = TRUE, scale = standardize)
-
-  dataset <- switch(family,
-                    "gaussian" = {
-                      list(x = x, y = y)
-                    },
-                    {
-                      switch.family(x = x, y = y,
-                                    family = family)
-                    })
-
-  x <- scale(dataset$x, center = TRUE, scale = FALSE)
-  y <- scale(dataset$y, scale = FALSE)
-  y <- as.numeric(y)
-
-  ## Warning: should we allow user to still specify their
-  ## own Z here?
-  ## Z <- NULL##will have to recalculate Z
+  pdata <- prepare.data(x = x,
+                        y = y,
+                        standardize = standardize,
+                        family = family)
+  x <- pdata$x
+  y <- pdata$y
   
   ## force sigmahat to 1 when doing glm!
   if(family == "binomial")
@@ -61,11 +48,12 @@ ridge.proj <- function(x, y,
   ## these are some old arguments that are still used in the code below
   ridge.unprojected <- TRUE
 
-  ## *center* (scale) the columns
-  x <- scale(x, center = TRUE, scale = standardize) 
-  y <- scale(y, scale = FALSE)
+  ## OLD AND WRONG since prepare.data see top
+  ## ## *center* (scale) the columns
+  ## x <- scale(x, center = TRUE, scale = standardize) 
+  ## y <- scale(y, scale = FALSE)
   
-  y  <- as.numeric(y)
+  ## y  <- as.numeric(y)
 
   biascorr <- Delta <- numeric(p)
   
@@ -92,7 +80,7 @@ ridge.proj <- function(x, y,
   hh <- h1$v %*% ((h1$d / (h1$d^2 + lambda)) * t(h1$u))
   
   ## Ruben Note: here the h1$d^2/n 1/n factor has moved out, the value of lambda
-  ## used is 1/n! See also comparing to my version
+  ## used is 1/n!
   
   cov2      <- tcrossprod(hh) 
   diag.cov2 <- diag(cov2)
@@ -213,6 +201,6 @@ ridge.proj <- function(x, y,
       colnames(x)
 
   class(out) <- "hdi"
-
+  
   return(out)
 }
