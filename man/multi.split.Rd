@@ -103,7 +103,7 @@ multi.split(x, y, B = 100, fraction = 0.5, ci = TRUE, ci.level = 0.95,
 \examples{
 n <-  40 # a bit small, to keep example "fast"
 p <- 256
-x <- matrix(rnorm(n*p), nrow = n, ncol = p)
+x <- matrix(rnorm(n * p), nrow = n, ncol = p)
 y <- x[,1] * 2 + x[,2] * 2.5 + rnorm(n)
 
 ## Multi-splitting with lasso.firstq as model selector function

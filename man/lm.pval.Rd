@@ -25,7 +25,7 @@ lm.pval(x, y, exact = TRUE, ...)
 
 \seealso{\code{\link{hdi}}}
 \examples{
-x <- matrix(rnorm(100*5), nrow = 100, ncol = 5)
+x <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 y <- x[,1] * 2 + x[,2] * 2.5 + rnorm(100)
 pval <- lm.pval(x, y)
 pval

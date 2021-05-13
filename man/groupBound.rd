@@ -66,7 +66,7 @@ groupBound(x, y, group, alpha = 0.05, eps = 0.1, nsplit = 11,
   Group bound: confidence intervals for groups of variables in sparse
   high dimensional regression without assumptions on the design.
   \emph{Journal of the Royal Statistical Society: Series B}, \bold{77},
-  923--945; \url{http://dx.doi.org/10.1111/rssb.12094}.
+  923--945; \doi{10.1111/rssb.12094}.
 }
 
 \author{Nicolai Meinshausen}

@@ -56,7 +56,7 @@ stability(x, y, EV, threshold = 0.75, B = 100, fraction = 0.5,
 %\seealso{...}
 
 \examples{
-x <- matrix(rnorm(100*1000), nrow = 100, ncol = 1000)
+x <- matrix(rnorm(100 * 1000), nrow = 100, ncol = 1000)
 y <- x[,1] * 2 + x[,2] * 2.5 + rnorm(100)
 fit.stab <- stability(x, y, EV = 1)
 fit.stab

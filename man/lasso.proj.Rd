@@ -93,7 +93,7 @@ lasso.proj(x, y, family = "gaussian", standardize = TRUE,
 %% speed-up computing
 %% >>> copy any changes to "../tests/ex-lasso.proj.R" <<< to ensure
 %% code is running
-x <- matrix(rnorm(100*20), nrow = 100, ncol = 10)
+x <- matrix(rnorm(100 * 10), nrow = 100, ncol = 10)
 y <- x[,1] + x[,2] + rnorm(100)
 fit.lasso <- lasso.proj(x, y)
 which(fit.lasso$pval.corr < 0.05) # typically: '1' and '2' and no other

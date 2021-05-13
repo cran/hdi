@@ -35,7 +35,7 @@ lasso.cv(x, y,
   An alternative for \code{hdi()}: \code{\link{lasso.firstq}}.
 }
 \examples{
-x <- matrix(rnorm(100*1000), nrow = 100, ncol = 1000)
+x <- matrix(rnorm(100 * 1000), nrow = 100, ncol = 1000)
 y <- x[,1] * 2 + x[,2] * 2.5 + rnorm(100)
 sel <- lasso.cv(x, y)
 sel

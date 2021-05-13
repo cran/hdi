@@ -26,7 +26,7 @@ fdr.adjust(p)
 
 \seealso{\code{\link{p.adjust}}}
 \examples{
-x <- matrix(rnorm(100*1000), nrow = 100, ncol = 1000)
+x <- matrix(rnorm(100 * 1000), nrow = 100, ncol = 1000)
 y <- x[,1] * 2 + x[,2] * 2.5 + rnorm(100)
 
 ## Multi-splitting with lasso.firstq as model selector function

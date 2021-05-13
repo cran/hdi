@@ -124,7 +124,7 @@ boot.lasso.proj(x, y, family = "gaussian", standardize = TRUE,
 \author{Ruben Dezeure}
 
 \examples{
-x <- matrix(rnorm(100*20), nrow = 100, ncol = 10)
+x <- matrix(rnorm(100 * 10), nrow = 100, ncol = 10)
 y <- x[,1] + x[,2] + rnorm(100)
 
 \donttest{

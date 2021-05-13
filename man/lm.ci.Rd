@@ -24,7 +24,7 @@ lm.ci(x, y, level = 0.95, ...)
 
 \seealso{\code{\link{hdi}}}
 \examples{
-x <- matrix(rnorm(100*5), nrow = 100, ncol = 5)
+x <- matrix(rnorm(100 * 5), nrow = 100, ncol = 5)
 y <- x[,1] * 2 + x[,2] * 2.5 + rnorm(100)
 ci <- lm.ci(x, y)
 ci
