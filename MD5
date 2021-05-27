@@ -1,4 +1,4 @@
-436c4cc976ba55a3d385742018f86572 *DESCRIPTION
+66ed6ddfedf98c96eed200aa56a080be *DESCRIPTION
 d410468581ae0c3ce1b04c8447874be5 *NAMESPACE
 90ff41872ff00ae1156ffef0e48b26a3 *R/boot.lasso-proj.R
 797546bbe50b7c1904dec8fdfeec87ed *R/hdi.R
@@ -12,7 +12,7 @@ c818efad1a6571833fab928bdaa8c484 *R/lasso-proj.R
 4781ccc227372c41c2afe4836d22c828 *R/reference.datasets.R
 79ba7dde7e15e12d9a73a1610b5a1840 *R/ridge-proj.R
 89e8d2fde7bc3cf2bb0365019ae5f413 *R/stability.R
-86df0ed23a18f62e276c97b16ff250d8 *build/partial.rdb
+2dac989bb91b779e606dfee10b59d237 *build/partial.rdb
 77b4cfb518e287bf85bdd0480f6ea393 *data/datalist
 2ea5489eabefbaa5ff1fe91d28b2b509 *data/riboflavin.RData
 3b353889f4847b6f3cc68491274da999 *inst/CITATION
@@ -36,10 +36,10 @@ ddb0a28e32399eb92e428cb49b0f2204 *man/rXb.rd
 3589a5f07c6372bc6167b01f8b3852ce *man/ridge.proj.Rd
 822b160015e8bb069a639a77bd0555ac *man/stability.Rd
 58ceda1f2dc7e44e9c32567ba6d30944 *tests/ex-clusterGroupBound.R
-0118501017042a56aa69b18c91dba8f0 *tests/ex-lasso.proj.R
+e006b449a37b7783da3ac10a4c8f68dc *tests/ex-lasso.proj.R
 e3fdb22a3f8e75eea31e9b3b10e5681e *tests/ex-plotClusterGroupBound.R
 222055f317fd47495933fdfcda3e4670 *tests/groupTsts.R
-7f7ba0cfe31ac9c0149a4b2026f9acc1 *tests/test-lasso.R
+adb0a7c90edf3825859ee50268f48ff8 *tests/test-lasso.R
 e5aa8c724557ea4ff5871a6207bdae3e *tests/test-multisplit.R
 9b7c8ad101611c5944d18b5c35d51230 *tests/test-ridge.R
 8f141036a1222fc3dd706dc0dd968bb0 *tests/test-stability.R
