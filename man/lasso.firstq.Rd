@@ -11,10 +11,10 @@
       \times p}{n * p}.}
   \item{y}{response vector of length \eqn{n}.}
   \item{q}{number of predictors that should be selected, a positive integer.}
-  \item{...}{optional additional arguments to be passed to \code{\link{glmnet}}.}
+  \item{...}{optional additional arguments to be passed to \code{\link[glmnet]{glmnet}}.}
 }
 \details{The \code{lasso.firstq} function calls
-  \code{\link{glmnet}} in a special way and simply postprocesses its
+  \code{\link[glmnet]{glmnet}} in a special way and simply postprocesses its
   nonzero predictor list, see its source code.
 }
 \value{Vector of selected predictors.}
@@ -22,7 +22,7 @@
 
 \seealso{\code{\link{hdi}};
   the default choice for \code{hdi()}, \code{\link{lasso.cv}}.
-  \code{\link{glmnet}}
+  \code{\link[glmnet]{glmnet}}
 }
 \examples{
 x <- matrix(rnorm(100 * 1000), nrow = 100, ncol = 1000)

@@ -17,7 +17,7 @@ get.signif.clusters <- function(tree,
 }
 
 ##' Only called from mssplit.hierarch.testing() :
-signif.partialFtest <- function(tree,
+signif_partialFtest <- function(tree,
                                 c,## current cluster to test
                                 x,
                                 y,
@@ -184,7 +184,7 @@ mssplit.hierarch.testing <- function(tree,
         {
           if(is.na(tree.pvals[c,1]))
             {## haven't calculated the p-values yet for this node
-              pvalues <- signif.partialFtest(tree=tree,
+              pvalues <- signif_partialFtest(tree=tree,
                                              c=c,
                                              y=y,
                                              x=x,

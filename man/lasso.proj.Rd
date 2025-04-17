@@ -59,7 +59,7 @@ lasso.proj(x, y, family = "gaussian", standardize = TRUE,
   \item{pval.corr}{Multiple testing corrected p-values for each
     parameter.}
   \item{groupTest}{Function to perform groupwise tests. Groups are
-    indicated using an index vector with entries in {1,...,p} or a list thereof.}
+    indicated using an index vector with entries in \{1,...,p\} or a list thereof.}
   \item{clusterGroupTest}{Function to perform groupwise tests based on
     hierarchical clustering. You can either provide a distance matrix
     and clustering method or the output of hierarchical clustering from

@@ -17,21 +17,21 @@ lasso.cv(x, y,
       \times p}{n * p}.}
   \item{y}{response vector of length \eqn{n}.}
   \item{nfolds}{the number of folds to be used in the cross-validation}
-  \item{grouped}{corresponds to the \code{grouped} argument to \code{\link{cv.glmnet}}. This has
+  \item{grouped}{corresponds to the \code{grouped} argument to \code{\link[glmnet]{cv.glmnet}}. This has
   a smart default such that glmnet does not give a warning about too
   small sample size.}
   \item{\dots}{further arguments to be passed to
-    \code{\link{cv.glmnet}}.}
+    \code{\link[glmnet]{cv.glmnet}}.}
 }
 \details{
-  The function basically only calls \code{\link{cv.glmnet}}, see source
+  The function basically only calls \code{\link[glmnet]{cv.glmnet}}, see source
   code.
 }
 \value{Vector of selected predictors.}
 \author{Lukas Meier}
 
 \seealso{\code{\link{hdi}} which uses \code{lasso.cv()} by default;
-  \code{\link{cv.glmnet}}.
+  \code{\link[glmnet]{cv.glmnet}}.
   An alternative for \code{hdi()}: \code{\link{lasso.firstq}}.
 }
 \examples{
